@@ -143,7 +143,9 @@ codes = {
         '113' : undef, # what is this ? 
         '115' : undef, # what is this ? 
         '116' : undef, # what is this ? 
-        '117' : undef # what is this ? 
+        '117' : undef, # what is this ? 
+        '84'  : undef,
+        ''    : undef
     },
     'T':{
         '0;' : tool_change
@@ -333,43 +335,46 @@ class machine:
             self.cur[i] = 0
         for i in self.data:
             i=i.strip()
-            print( "Parsing Gcode line ", i)   
-            #print(pos)
+            print( "Parsing Gcode line ", i)
+            print(pos)
             tmp = i.split()
-            command = tmp[0][0]
-            com_type = tmp[0][1:]
-            if command in codes:
-                if com_type in codes[command]:
-                    #print('good =>'+command+com_type)
-                    for j in tmp[1:]:
-                        axis = j[0]
-                        if axis == ';':
-                            # ignore comments
-                            break
-                        if axis in self.axes:
-                            val = float(j[1:])
-                            pos[axis] = val
-                            if self.cur['Z'] != pos['Z']:
-                                self.commands.append(layer())
-                                self.commands.append(tool_off(pos))
-                            self.cur[axis] = val
-                    # create action object
-                    #print(pos)
-                    if (pos['E'] == 0):
-                        act = tool_off(pos)
+            # print("tmp: " + tmp.__str__)
+            if tmp:
+             # and len(tmp) != 0:
+                command = tmp[0][0]
+                com_type = tmp[0][1:]
+                if command in codes:
+                    if com_type in codes[command]:
+                        #print('good =>'+command+com_type)
+                        for j in tmp[1:]:
+                            axis = j[0]
+                            if axis == ';':
+                                # ignore comments
+                                break
+                            if axis in self.axes:
+                                val = float(j[1:])
+                                pos[axis] = val
+                                if self.cur['Z'] != pos['Z']:
+                                    self.commands.append(layer())
+                                    self.commands.append(tool_off(pos))
+                                self.cur[axis] = val
+                        # create action object
+                        #print(pos)
+                        if (pos['E'] == 0):
+                            act = tool_off(pos)
+                        else:
+                            act = codes[command][com_type](pos)
+                        #print(act)
+                        self.commands.append(act)
+                        #if isinstance(act,move):
+                            #print(act.coord())
                     else:
-                        act = codes[command][com_type](pos)
-                    #print(act)
-                    self.commands.append(act)
-                    #if isinstance(act,move):
-                        #print(act.coord())
-                else:
-                    print(i)
-                    print(' G/M/T Code for this line is unknowm ' + com_type)
-                    #break
+                        print(i)
+                        print(' G/M/T Code for this line is unknowm ' + com_type)
+                        #break
             else:
-                
-                print(' line does not have a G/M/T Command '+ str(command))
+                print(' line does not have a G/M/T Command ')
+                # + str(command))
                 #break
         self.commands.append(tool_off(pos))
 
